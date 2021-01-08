@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+
+        <IsPackable>false</IsPackable>
+        <GenerateProgramFile>false</GenerateProgramFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NUnit" Version="3.12.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="UnitTest.fs" />
+        <Compile Include="Program.fs" />
+        <Content Include="config.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>true</Visible>
+        </Content>
+        <Content Include="invalidJSONConfig.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <Visible>true</Visible>
+        </Content>
+        <Content Include="partialConfig.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>true</Visible>
+        </Content>        
+        <Content Include="invalidJSONConfig.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>true</Visible>
+        </Content>        
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AppConfig.fsproj" />
+    </ItemGroup>
+
+</Project>

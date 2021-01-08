@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AppConfig", "AppConfig.fsproj", "{C324E66B-99D1-4147-B82A-A632AFB57EC3}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AppConfig.test", "AppConfig.test\AppConfig.test.fsproj", "{01663217-19E0-4FCB-91B8-53B2747164F3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C324E66B-99D1-4147-B82A-A632AFB57EC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C324E66B-99D1-4147-B82A-A632AFB57EC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C324E66B-99D1-4147-B82A-A632AFB57EC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C324E66B-99D1-4147-B82A-A632AFB57EC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01663217-19E0-4FCB-91B8-53B2747164F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01663217-19E0-4FCB-91B8-53B2747164F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01663217-19E0-4FCB-91B8-53B2747164F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01663217-19E0-4FCB-91B8-53B2747164F3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
