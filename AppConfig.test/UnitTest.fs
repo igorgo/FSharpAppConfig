@@ -42,12 +42,8 @@ type JsonFileTests() =
                 None
 
         match res with
-        | Ok r ->
-            printfn "res: %A" r
-            Assert.That(r, Is.EqualTo(expected))
-        | Error e ->
-            printfn "err: %s" e
-            Assert.Fail()
+        | Ok r -> Assert.That(r, Is.EqualTo(expected))
+        | Error e -> Assert.Fail()
 
     [<Test>]
     member this.InvalidJSONConfig() =

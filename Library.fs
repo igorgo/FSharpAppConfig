@@ -36,8 +36,6 @@ module AppConfig =
         | Some (s) ->
             match readFromFile<'T> s with
             | Ok r ->
-                printfn "r: %O" r
-
                 for key in fields do
                     let value = key.GetValue r
 
