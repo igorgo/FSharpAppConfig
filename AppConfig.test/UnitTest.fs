@@ -2,76 +2,53 @@ module AppConfig.test
 
 open NUnit.Framework
 open CharlieERP
+open System.Runtime.Serialization
 
+[<DataContract(Name = "Config", Namespace = "")>]
 type TConfig =
-    { mutable IpAddress: string
+    { [<DataMember>]
+      mutable IpAddress: string
+      [<DataMember>]
       mutable Port: int
+      [<DataMember>]
       mutable ServerName: string
-      mutable Timeout: int }
-    static member Default =
-        { IpAddress = "0.0.0.0"
+      [<DataMember(IsRequired  = false) >]
+      mutable Timeout: int
+       }
+with
+    static member Default = {
+          IpAddress = "0.0.0.0"
           Port = 1900
           ServerName = "charlie"
           Timeout = 2000 }
 
 [<TestFixture>]
-type JsonFileTests() =
+type XmlFileTests() =
     [<Test>]
     member this.NormalConfig() =
         let expected =
             { TConfig.Default with
                   ServerName = "bravo" }
 
-        let res =
-            AppConfig.Build TConfig.Default (Some(@".\config.json")) None None
-
+        let res = AppConfigBuilder<TConfig>().ReadFromFile(@".\config.xml").Config
         match res with
         | Ok r -> Assert.That(r, Is.EqualTo(expected))
         | Error _ -> Assert.Fail()
-
-
-    [<Test>]
-    member this.PartialFileConfig() =
-        let expected = { TConfig.Default with Port = 1600 }
-
-        let res =
-            AppConfig.Build
-                TConfig.Default
-                (Some(@".\partialConfig.json"))
-                None
-                None
-
-        match res with
-        | Ok r -> Assert.That(r, Is.EqualTo(expected))
-        | Error e -> Assert.Fail()
-
     [<Test>]
     member this.InvalidJSONConfig() =
-        let res =
-            AppConfig.Build
-                TConfig.Default
-                (Some(@".\invalidJSONConfig.json"))
-                None
-                None
-
+        let res = AppConfigBuilder<TConfig>().ReadFromFile(@".\invalidConfig.xml").Config
         match res with
         | Ok _ -> Assert.Fail()
         | Error _ -> Assert.Pass()
-
     [<Test>]
     member this.NonExistingFile() =
         let expected = "Specified config file not found."
 
-        let res =
-            AppConfig.Build
-                TConfig.Default
-                (Some(@".\blaBlaConfig.json"))
-                None
-                None
-
+        let res = AppConfigBuilder<TConfig>().ReadFromFile(@".\blaBlaConfig.xml").Config
         match res with
         | Ok _ -> Assert.Fail()
         | Error ex -> Assert.AreEqual(expected, ex)
+
 
 [<TestFixture>]
 type ArgsTests() =
@@ -79,14 +56,9 @@ type ArgsTests() =
     member this.WithInt() =
         let expected = { TConfig.Default with Port = 15 }
 
-        let res =
-            AppConfig.Build
-                TConfig.Default
-                None
-                (Some [| "--Port=15"
-                         "--bbb=bla-bla-bla" |])
-                None
-
+        let res = AppConfigBuilder<TConfig>(TConfig.Default).ApplyArgs([|
+                         "--Port=15"
+                         "--bbb=bla-bla-bla" |]).Config
         match res with
         | Ok r -> Assert.AreEqual(expected, r)
         | Error _ -> Assert.Fail()
@@ -96,15 +68,9 @@ type ArgsTests() =
         let expected =
             { TConfig.Default with
                   IpAddress = "16.16.16.16" }
-
-        let res =
-            AppConfig.Build
-                TConfig.Default
-                None
-                (Some [| "--IpAddress=16.16.16.16"
-                         "--bbb=blaBlaBla" |])
-                None
-
+        let res = AppConfigBuilder<TConfig>(TConfig.Default).ApplyArgs([|
+                         "--IpAddress=16.16.16.16"
+                         "--bbb=blaBlaBla" |]).Config
         match res with
         | Ok r -> Assert.AreEqual(expected, r)
         | Error _ -> Assert.Fail()
@@ -112,10 +78,8 @@ type ArgsTests() =
     [<Test>]
     member this.WithInvalidInt() =
         let expected = @"Couldn't convert ""1Y5"" to integer"
-
-        let res =
-            AppConfig.Build TConfig.Default None (Some [| "--Port=1Y5" |]) None
-
+        let res = AppConfigBuilder<TConfig>(TConfig.Default).ApplyArgs([|
+                         "--Port=1Y5" |]).Config
         match res with
         | Ok _ -> Assert.Fail()
         | Error ex -> Assert.AreEqual(expected, ex)
@@ -128,11 +92,8 @@ type EnvTests() =
 
         System.Environment.SetEnvironmentVariable("APP_CONF_Port", "1616")
 
-        let res =
-            AppConfig.Build TConfig.Default None None (Some "APP_CONF_")
-
+        let res = AppConfigBuilder<TConfig>(TConfig.Default).ApplyEnv("APP_CONF_").Config
         System.Environment.SetEnvironmentVariable("APP_CONF_Port", "")
-
         match res with
         | Ok r -> Assert.AreEqual(expected, r)
         | Error _ -> Assert.Fail()
@@ -142,13 +103,10 @@ type EnvTests() =
         let expected =
             { TConfig.Default with
                   IpAddress = "160.160.160.160" }
-
         System.Environment.SetEnvironmentVariable
             ("APP_CONF_IpAddress", "160.160.160.160")
 
-        let res =
-            AppConfig.Build TConfig.Default None None (Some "APP_CONF_")
-
+        let res = AppConfigBuilder<TConfig>(TConfig.Default).ApplyEnv("APP_CONF_").Config
         System.Environment.SetEnvironmentVariable("APP_CONF_IpAddress", "")
 
         match res with
@@ -157,11 +115,10 @@ type EnvTests() =
 
     [<Test>]
     member this.WithInvalidInt() =
-        let expected = @"Couldn't convert ""1Y5"" to integer"
-
-        let res =
-            AppConfig.Build TConfig.Default None (Some [| "--Port=1Y5" |]) None
-
+        let expected = @"Couldn't convert ""1G5"" to integer"
+        System.Environment.SetEnvironmentVariable("APP_CONF_Port", "1G5")
+        let res = AppConfigBuilder<TConfig>(TConfig.Default).ApplyEnv("APP_CONF_").Config
+        System.Environment.SetEnvironmentVariable("APP_CONF_Port", "")
         match res with
         | Ok _ -> Assert.Fail()
         | Error ex -> Assert.AreEqual(expected, ex)
@@ -177,18 +134,15 @@ type PriorityTests() =
                   ServerName = "bravo" }
 
         System.Environment.SetEnvironmentVariable("APP_CONF_Port", "32168")
-
         System.Environment.SetEnvironmentVariable
             ("APP_CONF_IpAddress", "8.16.32.64")
-
-        let res =
-            AppConfig.Build
-                TConfig.Default
-                (Some(@".\config.json"))
-                (Some [| "--IpAddress=16.32.64.128" |])
-                (Some "APP_CONF_")
-
+        let res = AppConfigBuilder<TConfig>()
+                      .ReadFromFile(@".\config.xml")
+                      .ApplyEnv("APP_CONF_")
+                      .ApplyArgs([| "--IpAddress=16.32.64.128" |])
+                      .Config
         System.Environment.SetEnvironmentVariable("APP_CONF_Port", "")
+        System.Environment.SetEnvironmentVariable("APP_CONF_IpAddress", "")
 
         match res with
         | Ok r -> Assert.AreEqual(expected, r)

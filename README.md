@@ -5,12 +5,6 @@ Application config builder.
 
 Builds config `Record` from specified JSON config file, environment variables and command-line arguments.
 
-Values priority:
-  - Command-line arguments (highest)
-  - Environment variable
-  - Value from JSON file 
-  - Default value (lowest)
-
 Usage
 -----
 
@@ -20,7 +14,7 @@ Build
 -----
 
 ```
-$ dotnet build AppConfig.sln
+$ dotnet build
 ```
 
 Test

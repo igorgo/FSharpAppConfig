@@ -2,109 +2,64 @@
 
 open System
 open System.IO
-open System.Text.Json
+open System.Xml
+open System.Runtime.Serialization
 open Microsoft.FSharp.Reflection
 
-module AppConfig =
-
-    let readFromFile<'T> (fileName: string): Result<'T, string> =
-        match File.Exists(fileName) with
-        | true ->
-            let fileContent = File.ReadAllText(fileName)
-
-            try
-                let fConf =
-                    JsonSerializer.Deserialize<'T> fileContent
-
-                Ok fConf
-            with
-            | :? ArgumentNullException -> Error "Config file is empty"
-            | ex -> Error ex.Message
-        | false -> Error "Specified config file not found."
-
-
-    let Build (defaultConfig: 'T)
-              (fileName: string option)
-              (args: Option<string []>)
-              (envPrefix: string option)
-              : Result<'T, string> =
-        let fields = FSharpType.GetRecordFields(typeof<'T>)
-        let mutable conf = defaultConfig
-        let mutable err: string list = []
-
-        match fileName with
-        | Some (s) ->
-            match readFromFile<'T> s with
-            | Ok r ->
-                for key in fields do
-                    let value = key.GetValue r
-
-                    match value with
-                    | null -> ()
-                    | v -> key.SetValue(conf, v)
-
-                ()
-            | Error ex ->
-                err <- ex :: err
-                ()
-        | None -> ()
-
-        let pref =
-            match envPrefix with
-            | Some p -> p
-            | None -> ""
-
-        let setIntVal (key: Reflection.PropertyInfo, s: string) =
-            match Int32.TryParse(s) with
-            | (true, i) -> key.SetValue(conf, i)
-            | _ ->
-                err <-
-                    sprintf "Couldn't convert \"%s\" to integer" s
-                    :: err
-
-        for key in fields do
-            let value =
-                Environment.GetEnvironmentVariable(pref + key.Name)
-
-            match value with
-            | null -> ()
-            | v ->
+    type AppConfigBuilder<'T>(?defaultConfig: 'T) = 
+        let mutable conf =
+            match defaultConfig with
+            | Some c -> Ok c
+            | None -> Error ("Neither default config nor file specified")
+        let fields = FSharpType.GetRecordFields(typeof<'T>)    
+        let setValue(key: Reflection.PropertyInfo, value: string) =
+            match conf with
+            Ok c -> 
                 match (key.PropertyType) with
-                | t when t = typeof<String> -> key.SetValue(conf, v)
-                | t when t = typeof<Int32> -> setIntVal (key, v)
-                | _ ->
-                    err <-
-                        sprintf "Wrong type of \"%s\" property" key.Name
-                        :: err
-
-        match args with
-        | Some aConf ->
-            let argsDict =
-                Collections.Generic.Dictionary<string, string>()
-
-            for arg in aConf do
-                let m =
-                    System.Text.RegularExpressions.Regex.Match
-                        (arg, @"--([a-zA-Z]+)=(.+)$")
-
-                if m.Success
-                then argsDict.Add(m.Groups.[1].Value, m.Groups.[2].Value)
-
-            for key in fields do
-                if argsDict.ContainsKey(key.Name) then
-                    let v = argsDict.Item(key.Name)
-
-                    match (key.PropertyType) with
-                    | t when t = typeof<String> -> key.SetValue(conf, v)
-                    | t when t = typeof<Int32> -> setIntVal (key, v)
+                | t when t = typeof<String> -> key.SetValue(c, value)
+                | t when t = typeof<Int32> ->
+                    match Int32.TryParse(value) with
+                    | (true, i) -> key.SetValue(c, i)
                     | _ ->
-                        err <-
-                            sprintf "Wrong type of \"%s\" property" key.Name
-                            :: err
-
-            ()
-        | None -> ()
-
-        match err with
-        | [] -> Ok conf
-        | messages -> Error(messages |> String.concat Environment.NewLine)
+                        conf <- Error (sprintf "Couldn't convert \"%s\" to integer" value)
+                | _ -> conf <- Error (sprintf "Wrong type of \"%s\" property" key.Name)
+            |Error _ -> ()
+            
+        member this.Config = conf
+        member this.ReadFromFile fileName =
+            match File.Exists(fileName) with
+            | true ->
+                use fs = new FileStream(fileName, FileMode.Open);
+                let reader = XmlDictionaryReader.CreateTextReader(fs, XmlDictionaryReaderQuotas());
+                try
+                    let ser = DataContractSerializer(typeof<'T>);
+                    let fConf = ser.ReadObject reader :?> 'T
+                    conf <- Ok fConf
+                with
+                | exn -> conf <- Error exn.Message
+            | false -> conf <- Error "Specified config file not found."
+            this
+        member this.ApplyEnv(prefix: string) =
+            match conf with
+            | Ok _ ->
+                for key in fields do
+                    match Environment.GetEnvironmentVariable(prefix + key.Name) with
+                    | null -> ()
+                    | v -> setValue(key, v)
+            | Error _ -> ()
+            this
+        member this.ApplyArgs(args: string []) =
+             match conf with
+             | Ok _ ->
+                 let argsDict =
+                    Collections.Generic.Dictionary<string, string>()
+                 for arg in args do
+                    let m =
+                        System.Text.RegularExpressions.Regex.Match(arg, @"--([a-zA-Z]+)=(.+)$")
+                    if m.Success
+                    then argsDict.Add(m.Groups.[1].Value, m.Groups.[2].Value)
+                 for key in fields do
+                    if argsDict.ContainsKey(key.Name) then
+                        setValue(key, argsDict.Item(key.Name))
+             | Error _ -> ()
+             this
