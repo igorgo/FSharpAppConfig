@@ -20,7 +20,15 @@
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
           <Visible>true</Visible>
         </Content>
+        <Content Include="config.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <Visible>true</Visible>
+        </Content>
         <Content Include="invalidConfig.xml">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <Visible>true</Visible>
+        </Content>
+        <Content Include="invalidConfig.json">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
           <Visible>true</Visible>
         </Content>

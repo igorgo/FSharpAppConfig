@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Config>
     <IpAddress>0.0.0.0</IpAddress>
+    <LogLevels xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+        <a:string>error</a:string>
+        <a:string>info</a:string>
+    </LogLevels>
     <Port>1900</Port>
     <ServerName>bravo</ServerName>
     <Timeout>2000</Timeout>
+    <Years xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+        <a:int>2016</a:int>
+        <a:int>1932</a:int>
+        <a:int>1964</a:int>
+    </Years>
 </Config>
