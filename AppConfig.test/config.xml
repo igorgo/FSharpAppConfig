@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Config>
+    <IpAddress>0.0.0.0</IpAddress>
+    <Port>1900</Port>
+    <ServerName>bravo</ServerName>
+    <Timeout>2000</Timeout>
+</Config>

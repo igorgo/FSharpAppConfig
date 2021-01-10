@@ -16,22 +16,14 @@
     <ItemGroup>
         <Compile Include="UnitTest.fs" />
         <Compile Include="Program.fs" />
-        <Content Include="config.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>true</Visible>
-        </Content>
-        <Content Include="invalidJSONConfig.json">
+        <Content Include="config.xml">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
           <Visible>true</Visible>
         </Content>
-        <Content Include="partialConfig.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>true</Visible>
-        </Content>        
-        <Content Include="invalidJSONConfig.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>true</Visible>
-        </Content>        
+        <Content Include="invalidConfig.xml">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <Visible>true</Visible>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
