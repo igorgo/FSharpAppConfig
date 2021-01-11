@@ -208,7 +208,7 @@ type EnvTests() =
                 .ApplyEnv("APP_CONF_")
                 .Config
 
-        Environment.SetEnvironmentVariable("APP_CONF_Port", "")
+        Environment.SetEnvironmentVariable("APP_CONF_UseFeature", "")
 
         match res with
         | Ok r -> Assert.AreEqual(expected, r)
