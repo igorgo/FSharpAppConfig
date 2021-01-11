@@ -32,10 +32,16 @@ type AppConfigBuilder<'T>(?defaultConfig: 'T) =
         writer.Flush()
         ms.Position <- int64 0
         ms
+
     let setValue (key: Reflection.PropertyInfo, value: string) =
         match conf with
         | Ok c ->
             match (key.PropertyType) with
+            | t when t = typeof<bool> ->
+                match value with
+                | "true" -> key.SetValue(c, true)
+                | "false" -> key.SetValue(c, false)
+                | _ -> conf <- Error(sprintf "Couldn't convert \"%s\" to boolean" value)
             | t when t = typeof<String> -> key.SetValue(c, value)
             | t when t = typeof<int> ->
                 match Int32.TryParse(value) with
@@ -46,12 +52,14 @@ type AppConfigBuilder<'T>(?defaultConfig: 'T) =
                     genStream (sprintf "{\"value\":%s}" value)
                     |> DataContractJsonSerializer(typeof<TIntArray>)
                         .ReadObject :?> TIntArray
+
                 key.SetValue(c, arr.value)
             | t when t = typeof<string []> ->
                 let arr =
                     genStream (sprintf "{\"value\":%s}" value)
                     |> DataContractJsonSerializer(typeof<TStrArray>)
                         .ReadObject :?> TStrArray
+
                 key.SetValue(c, arr.value)
             | _ -> conf <- Error(sprintf "Wrong type of \"%s\" property" key.Name)
         | Error _ -> ()

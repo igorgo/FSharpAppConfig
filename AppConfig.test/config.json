@@ -6,6 +6,7 @@
   ],
   "Port": 1900,
   "ServerName": "bravo",
+  "UseFeature": false,
   "Timeout": 2000,
   "Years": [
     2016,
