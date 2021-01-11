@@ -5,7 +5,7 @@ open NUnit.Framework
 open CharlieERP
 open System.Runtime.Serialization
 
-  
+
 [<DataContract(Name = "Config", Namespace = "")>]
 type TConfig =
     { [<DataMember>]
@@ -17,6 +17,8 @@ type TConfig =
       [<DataMember(IsRequired = false)>]
       mutable Timeout: int
       [<DataMember>]
+      mutable UseFeature: bool
+      [<DataMember>]
       mutable LogLevels: string []
       [<DataMember>]
       mutable Years: int [] }
@@ -24,6 +26,7 @@ type TConfig =
         { IpAddress = "0.0.0.0"
           Port = 1900
           ServerName = "charlie"
+          UseFeature = true
           Timeout = 2000
           LogLevels = [| "error"; "info" |]
           Years = [| 2016; 1932; 1964 |] }
@@ -34,7 +37,9 @@ type XmlFileTests() =
     member this.NormalConfig() =
         let expected =
             { TConfig.Default with
-                  ServerName = "bravo" }
+                  ServerName = "bravo"
+                  UseFeature = false }
+
         let res =
             AppConfigBuilder<TConfig>()
                 .ReadFromFile(@"./config.xml")
@@ -74,7 +79,9 @@ type JsonFileTests() =
     member this.NormalConfig() =
         let expected =
             { TConfig.Default with
-                  ServerName = "bravo" }
+                  ServerName = "bravo"
+                  UseFeature = false }
+
         let res =
             AppConfigBuilder<TConfig>()
                 .ReadFromFile(@"config.json")
@@ -98,6 +105,21 @@ type JsonFileTests() =
 [<TestFixture>]
 type ArgsTests() =
     [<Test>]
+    member this.WithBool() =
+        let expected =
+            { TConfig.Default with
+                  UseFeature = false }
+
+        let res =
+            AppConfigBuilder<TConfig>(TConfig.Default)
+                .ApplyArgs([| "--UseFeature=false"
+                              "--bbb=bla-bla-bla" |])
+                .Config
+
+        match res with
+        | Ok r -> Assert.AreEqual(expected, r)
+        | Error _ -> Assert.Fail()
+
     member this.WithInt() =
         let expected = { TConfig.Default with Port = 15 }
 
@@ -112,11 +134,14 @@ type ArgsTests() =
 
     [<Test>]
     member this.WithIntArray() =
-        let expected = { TConfig.Default with Years = [|2020; 2019; 2021|] }
+        let expected =
+            { TConfig.Default with
+                  Years = [| 2020; 2019; 2021 |] }
 
         let res =
             AppConfigBuilder<TConfig>(TConfig.Default)
-                .ApplyArgs([| "--Years=[2020,2019,2021]"; "--bbb=bla-bla-bla" |])
+                .ApplyArgs([| "--Years=[2020,2019,2021]"
+                              "--bbb=bla-bla-bla" |])
                 .Config
 
         match res with
@@ -143,7 +168,7 @@ type ArgsTests() =
     member this.WithStringArray() =
         let expected =
             { TConfig.Default with
-                  LogLevels = [|"db"; "api"|] }
+                  LogLevels = [| "db"; "api" |] }
 
         let res =
             AppConfigBuilder<TConfig>(TConfig.Default)
@@ -171,6 +196,25 @@ type ArgsTests() =
 [<TestFixture>]
 type EnvTests() =
     [<Test>]
+    member this.WithBool() =
+        let expected =
+            { TConfig.Default with
+                  UseFeature = false }
+
+        Environment.SetEnvironmentVariable("APP_CONF_UseFeature", "false")
+
+        let res =
+            AppConfigBuilder<TConfig>(TConfig.Default)
+                .ApplyEnv("APP_CONF_")
+                .Config
+
+        Environment.SetEnvironmentVariable("APP_CONF_Port", "")
+
+        match res with
+        | Ok r -> Assert.AreEqual(expected, r)
+        | Error _ -> Assert.Fail()
+
+    [<Test>]
     member this.WithInt() =
         let expected = { TConfig.Default with Port = 1616 }
 
@@ -189,7 +233,9 @@ type EnvTests() =
 
     [<Test>]
     member this.WithIntArray() =
-        let expected = { TConfig.Default with Years = [|1989; 1999; 2006; 2009|] }
+        let expected =
+            { TConfig.Default with
+                  Years = [| 1989; 1999; 2006; 2009 |] }
 
         Environment.SetEnvironmentVariable("APP_CONF_Years", "[1989, 1999, 2006, 2009]")
 
@@ -210,8 +256,7 @@ type EnvTests() =
             { TConfig.Default with
                   IpAddress = "160.160.160.160" }
 
-        Environment.SetEnvironmentVariable
-            ("APP_CONF_IpAddress", "160.160.160.160")
+        Environment.SetEnvironmentVariable("APP_CONF_IpAddress", "160.160.160.160")
 
         let res =
             AppConfigBuilder<TConfig>(TConfig.Default)
@@ -228,10 +273,9 @@ type EnvTests() =
     member this.WithStringArray() =
         let expected =
             { TConfig.Default with
-                  LogLevels = [|"sys"; "security"|] }
+                  LogLevels = [| "sys"; "security" |] }
 
-        Environment.SetEnvironmentVariable
-            ("APP_CONF_LogLevels", "[\"sys\", \"security\"]")
+        Environment.SetEnvironmentVariable("APP_CONF_LogLevels", "[\"sys\", \"security\"]")
 
         let res =
             AppConfigBuilder<TConfig>(TConfig.Default)
@@ -268,12 +312,12 @@ type PriorityTests() =
             { TConfig.Default with
                   Port = 32168
                   IpAddress = "16.32.64.128"
-                  ServerName = "bravo" }
+                  ServerName = "bravo"
+                  UseFeature = false }
 
         Environment.SetEnvironmentVariable("APP_CONF_Port", "32168")
 
-        Environment.SetEnvironmentVariable
-            ("APP_CONF_IpAddress", "8.16.32.64")
+        Environment.SetEnvironmentVariable("APP_CONF_IpAddress", "8.16.32.64")
 
         let res =
             AppConfigBuilder<TConfig>()
