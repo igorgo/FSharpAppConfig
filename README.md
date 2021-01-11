@@ -3,7 +3,7 @@ F# Application Config Builder
 
 Application config builder.
 
-Builds config `Record` from specified XML config file, environment variables and command-line arguments.
+Builds config `Record` from specified JSON or XML config file, environment variables and command-line arguments.
 
 Usage
 -----
